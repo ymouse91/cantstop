@@ -1,0 +1,1391 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" sizes="192x192" href="./icon192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./icon192.png">
+  <title>Can't Stop (PWA)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b2f;
+      --panel2:#112543;
+      --line:rgba(255,255,255,.14);
+      --txt:#e8f0ff;
+      --muted:rgba(232,240,255,.7);
+      --good:#3ddc97;
+      --bad:#ff5c77;
+      --warn:#ffd166;
+      --cell: 28px;
+      --gap: 6px;
+      --radius: 14px;
+      --shadow: 0 8px 24px rgba(0,0,0,.35);
+      --safeTop: env(safe-area-inset-top, 0px);
+      --safeBottom: env(safe-area-inset-bottom, 0px);
+      --safeLeft: env(safe-area-inset-left, 0px);
+      --safeRight: env(safe-area-inset-right, 0px);
+	  --vh: 1vh;			 
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%;   min-height: calc(var(--vh) * 100);margin:0; background: radial-gradient(1200px 700px at 20% 10%, #173258 0%, var(--bg) 55%, #05070b 100%); color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body{ overflow:hidden; }
+    button,select,input{ font:inherit; }
+	
+
+    .app{
+      height:100%;
+	  min-height: calc(var(--vh) * 100);
+      display:flex;
+      flex-direction:column;
+      padding: calc(10px + var(--safeTop)) calc(10px + var(--safeRight)) calc(10px + var(--safeBottom)) calc(10px + var(--safeLeft));
+      gap:10px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-height: 52px;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      line-height:1.05;
+    }
+    .brand .t{ font-weight:800; letter-spacing:.2px; }
+    .brand .s{ font-size:12px; color:var(--muted); }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+    .pill strong{ font-weight:800; }
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,.22);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn[disabled]{ opacity:.45; cursor:not-allowed; }
+    .btn.primary{ border-color: rgba(61,220,151,.55); background: rgba(61,220,151,.14); margin-top: 16px;}
+    .btn.danger{ border-color: rgba(255,92,119,.55); background: rgba(255,92,119,.14); }
+    .btn.warn{ border-color: rgba(255,209,102,.55); background: rgba(255,209,102,.14); }
+    .btn.small{ padding:7px 10px; border-radius:10px; font-size: 13px; }
+
+    .main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:10px;
+      min-height:0;
+    }
+    @media (max-width: 980px){
+      .main{ grid-template-columns: 1fr; }
+    }
+
+    .boardWrap, .side{
+      min-height:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .boardHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+    }
+    .boardHeader .left{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .boardHeader .right{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .statusLine{
+      color:var(--muted);
+      font-size: 13px;
+    }
+
+    .boardArea{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .cols{
+      flex:1;
+      display:grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: var(--gap);
+      padding: 10px;
+      min-height:0;
+    }
+
+    .col{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:6px;
+      min-height:0;
+    }
+    .colTop{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height: 28px;
+      border-radius: 10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      font-weight:800;
+      font-size: 13px;
+      position:relative;
+    }
+    .colTop.locked{
+      background: rgba(255,255,255,.04);
+      opacity:.6;
+    }
+    .colTop .lock{
+      position:absolute; right:6px; top:4px;
+      font-size: 12px; opacity:.75;
+    }
+
+    .stack{
+      flex:1;
+      display:flex;
+      flex-direction:column-reverse;
+      gap: 4px;
+      min-height:0;
+      padding-bottom: 2px;
+    }
+    .cell{
+      height: var(--cell);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .cell.topCell{
+      border-color: rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+    }
+    .markers{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      padding: 0 4px;
+      flex-wrap:wrap;
+    }
+    .m{
+      width: 12px; height: 12px;
+      border-radius: 4px;
+      border:1px solid rgba(255,255,255,.35);
+      box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    }
+    .runner{
+      width: 12px; height: 12px;
+      border-radius: 999px;
+      background: #fff;
+      border: 2px solid rgba(0,0,0,.35);
+      box-shadow: 0 2px 10px rgba(0,0,0,.45);
+    }
+
+    .side{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .sideHeader{
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .sideBody{
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.16);
+      padding:10px;
+    }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+	.dicerow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .dice{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .die{
+      width:40px; height:40px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900;
+      font-size: 18px;
+    }
+
+    .options{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-height:0;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 2px;
+    }
+    .optBtn{
+      text-align:left;
+      display:flex; justify-content:space-between; gap:10px; align-items:center;
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+    }
+    .optBtn:active{ transform: translateY(1px); }
+    .optBtn .meta{ color:var(--muted); font-size: 12px; }
+    .optBtn .sum{ font-weight:900; }
+    .optBtn[disabled]{ opacity:.45; cursor:not-allowed; }
+
+    .players{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .pitem{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.05);
+      padding:10px;
+    }
+    .pname{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .pname .dot{
+      width:14px; height:14px; border-radius:6px; border:1px solid rgba(255,255,255,.35);
+      flex:0 0 auto;
+    }
+    .pname .nm{
+      font-weight:900;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .pscore{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+      color:var(--muted);
+      font-size: 13px;
+      text-align:right;
+    }
+
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+    }
+    .overlay.show{ display:flex; }
+ 
+ .modal{
+  width:min(720px, 100%);
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.22);
+
+  /* EI läpinäkyvä */
+  background: linear-gradient(
+    180deg,
+    #1a2a44,
+    #101c30
+  );
+
+  box-shadow: 0 18px 60px rgba(0,0,0,.75);
+  overflow:hidden;
+}
+
+    .modalHead{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.2);
+    }
+    .modalBody{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 640px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+    .field{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .field label{ font-size:12px; color:var(--muted); }
+    .field input, .field select{
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color:var(--txt);
+      outline:none;
+    }
+
+    .hint{ color:var(--muted); font-size: 13px; line-height:1.35; }
+
+    a{ color: #b7d8ff; }
+	
+	.boardArea{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+
+  /* LISÄÄ: keskitys pystysuunnassa */
+  justify-content:center;
+}
+.cols{
+  /* POISTA tai kommentoi pois tämä: */
+  /* flex:1; */
+
+  /* LISÄÄ nämä: */
+  flex:0 0 auto;
+  margin:auto;              /* keskittää myös vaakasuunnassa */
+  width:100%;
+  max-width: 1100px;        /* halutessa, estää liian leveäksi venymisen PC:llä */
+
+  display:grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: var(--gap);
+  padding: 10px;
+  min-height:0;
+}
+
+.cell{
+  height: var(--cell);
+  border-radius: 10px;
+
+  /* enemmän kontrastia */
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.08);
+
+  position:relative;
+  overflow:hidden;
+
+  /* kevyt hohde erottaa ruudut taustasta */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 6px 18px rgba(0,0,0,.25);
+}
+
+.cell.topCell{
+  border-color: rgba(255,255,255,.80);
+  background: rgba(255,255,255,.12);
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  background: radial-gradient(1200px 700px at 20% 10%, #234a7c 0%, var(--bg) 55%, #070a10 100%);
+  color:var(--txt);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.boardWrap, .side{
+  min-height:0;
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.18);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+
+.cell.spacer{
+  visibility:hidden;
+  pointer-events:none;
+}
+
+/* iPad landscape: vapautetaan pystysuoraa tilaa sivupaneelissa */
+@media (min-width: 768px) and (orientation: landscape){
+  /* Piilota sivupaneelin otsikko */
+  .sideHeader{
+    display:none;
+  }
+
+  /* Piilota row-rivit vain sivupaneelin sisältä
+     (ei koske topbaria tai modaalien row-rivejä) */
+  .side .row{
+    display:none;
+  }
+}
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="t">Can't Stop</div>
+      <div class="s">PC / iPad PWA </div>
+    </div>
+    <div class="pill" id="turnPill">
+      Vuoro: <strong id="turnName">-</strong>
+    </div>
+    <div class="dicerow">
+      <button class="btn small" id="btnHow">Ohjeet</button>
+      <button class="btn small" id="btnNew">Uusi peli</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="boardWrap">
+      <div class="boardHeader">
+        <div class="left">
+          <div class="statusLine" id="statusLine">Aloita uusi peli.</div>
+        </div>
+        <div class="right">
+
+
+          <button class="btn danger" id="btnEndTurn" title="Pakota vuoron vaihto (vain jos jumissa)" style="display:none;">Vuoro ohi</button>
+        </div>
+      </div>
+      <div class="boardArea">
+        <div class="cols" id="cols"></div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="sideHeader">
+        <div class="pill">Nopat</div>
+        <div class="pill">Runnereita: <strong id="runnerCount">0</strong>/3</div>
+      </div>
+      <div class="sideBody">
+        <div class="card">
+          <div class="dicerow" style="justify-content:space-between;">
+            <div class="dice" id="dice"></div>
+            <div class="pill">Heitto: <strong id="rollNum">0</strong></div>
+          </div>
+          <div class="hint" id="rollHint" style="margin-top:8px;">
+            Heitä 4 noppaa. Valitse paritus (2 summaa). Jos valittu paritus mahdollistaa 2 siirtoa, molemmat on tehtävä.
+          </div>
+        </div>
+
+
+
+        <div class="card">
+          <div class="row" style="justify-content:space-between;">
+            <div class="pill">Pelaajat</div>
+            <div class="pill">Voitetut pylväät: <strong id="needWin">3</strong></div>
+          </div>
+          <div class="players" id="players"></div>
+		  <button class="btn primary" id="btnRoll">Heitä</button>
+          <button class="btn warn" id="btnStop">Lopeta (tallenna)</button>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; gap:8px; min-height:0;">
+          <div class="row" style="justify-content:space-between;">
+            <div class="pill">Vaihtoehdot</div>
+            <div class="pill">Aktiiviset pylväät: <strong id="activeCols">-</strong></div>
+          </div>
+          <div class="options" id="options"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP MODAL -->
+<div class="overlay" id="setupOverlay" aria-hidden="true">
+  <div class="modal">
+    <div class="modalHead">
+      <div style="font-weight:900;">Uusi peli</div>
+      <button class="btn small" id="btnCloseSetup">Sulje</button>
+    </div>
+    <div class="modalBody">
+      <div class="grid2">
+        <div class="field">
+          <label>Pelaajien määrä</label>
+          <select id="playerCount">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Aloittaja</label>
+          <select id="startPlayer"></select>
+        </div>
+      </div>
+
+      <div class="grid2" id="playerFields"></div>
+
+      <div class="hint">
+        Vinkki: iPadilla lisää tämä kotinäytölle (Share → Add to Home Screen) PWA-käyttöön.
+      </div>
+
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn primary" id="btnStartGame">Aloita</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOWTO MODAL -->
+<div class="overlay" id="howOverlay" aria-hidden="true">
+  <div class="modal">
+    <div class="modalHead">
+      <div style="font-weight:900;">Ohjeet (tiivistelmä)</div>
+      <button class="btn small" id="btnCloseHow">Sulje</button>
+    </div>
+    <div class="modalBody">
+      <div class="hint">
+        <ul>
+          <li>Heitä 4 noppaa ja muodosta <b>2 paria</b> → saat 2 summaa (2–12).</li>
+          <li>Summa kertoo pylvään. Jos valittu paritus antaa 2 mahdollista siirtoa, <b>molemmat on tehtävä</b>.</li>
+          <li>Max 3 aktiivista pylvästä (3 valkoista runneria). Kun 3 on käytössä, uutta pylvästä ei voi aloittaa.</li>
+          <li><b>Lopeta (tallenna)</b>: siirrät omat merkit runnerien kohdille. Jos tulet myöhemmin samaan pylvääseen, aloitat merkkisi yläpuolelta.</li>
+          <li><b>Bust</b>: jos heiton jälkeen et voi liikuttaa/aloittaa mitään, vuoro loppuu heti ja <b>kaikki vuoron edistys menetetään</b>.</li>
+          <li>Pylvään huippuun pääsy ja pysäytys → pylväs <b>voitetaan</b> ja lukitaan. Muut merkit siinä pylväässä palautuvat omistajilleen.</li>
+          <li>Ensimmäinen, joka voittaa 3 pylvästä, voittaa pelin.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // --- PWA SW ---
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  }
+
+  // Column heights (standard Can't Stop board)
+  const COLS = [2,3,4,5,6,7,8,9,10,11,12];
+  const HEIGHT = {2:3,3:5,4:7,5:9,6:11,7:13,8:11,9:9,10:7,11:5,12:3};
+  const MAXH = 13;
+const START_OFFSET = {
+  2:7,
+  3:6,
+  4:5,
+  5:4,
+  6:3,
+  7:2,
+  8:3,
+  9:4,
+  10:5,
+  11:6,
+  12:7
+};
+
+
+  // UI refs
+  const elCols = document.getElementById("cols");
+  const elDice = document.getElementById("dice");
+  const elRollNum = document.getElementById("rollNum");
+  const elOptions = document.getElementById("options");
+  const elStatus = document.getElementById("statusLine");
+  const elTurnName = document.getElementById("turnName");
+  const elPlayers = document.getElementById("players");
+  const elRunnerCount = document.getElementById("runnerCount");
+  const elActiveCols = document.getElementById("activeCols");
+
+  const btnRoll = document.getElementById("btnRoll");
+  const btnStop = document.getElementById("btnStop");
+  const btnEndTurn = document.getElementById("btnEndTurn");
+
+  const setupOverlay = document.getElementById("setupOverlay");
+  const howOverlay = document.getElementById("howOverlay");
+  const btnNew = document.getElementById("btnNew");
+  const btnHow = document.getElementById("btnHow");
+  const btnCloseSetup = document.getElementById("btnCloseSetup");
+  const btnStartGame = document.getElementById("btnStartGame");
+  const playerCountSel = document.getElementById("playerCount");
+  const playerFields = document.getElementById("playerFields");
+  const startPlayerSel = document.getElementById("startPlayer");
+  const btnCloseHow = document.getElementById("btnCloseHow");
+
+  // Colors
+  const PLAYER_COLORS = [
+    {name:"Punainen", hex:"#ff5c77"},
+    {name:"Sininen",  hex:"#5fb0ff"},
+    {name:"Vihreä",   hex:"#3ddc97"},
+    {name:"Keltainen",hex:"#ffd166"},
+  ];
+
+  // --- Game state ---
+  let G = null;
+
+  function newEmptyGame(players){
+    const perm = {};
+    const wonBy = {};
+    for (const c of COLS){
+      wonBy[c] = -1;
+      perm[c] = players.map(()=>0); // position 0..HEIGHT[c]
+    }
+    return {
+      players: players.map((p,i)=>({ id:i, name:p.name, color:p.color, won:0 })),
+      turn: 0,
+      perm,
+      wonBy,
+      // turn-temp
+      temp: {},          // c -> tempPos (>= perm)
+      active: [],        // active columns in this turn
+      lastDice: [],
+      rollNo: 0,
+      phase: "NEED_ROLL", // NEED_ROLL | NEED_CHOICE | ENDED
+      winner: -1
+    };
+  }
+
+  function resetTurnTemp(){
+    G.temp = {};
+    G.active = [];
+    G.lastDice = [];
+    G.rollNo = 0;
+    G.phase = "NEED_ROLL";
+    renderAll();
+  }
+
+  function startGame(players, startIndex){
+    G = newEmptyGame(players);
+    G.turn = startIndex;
+    resetTurnTemp();
+    setStatus(`${G.players[G.turn].name}: heitä nopat.`);
+  }
+
+  // --- Rendering board skeleton ---
+  function buildBoard(){
+    elCols.innerHTML = "";
+    for (const c of COLS){
+      const col = document.createElement("div");
+      col.className = "col";
+      col.dataset.col = String(c);
+
+      const top = document.createElement("div");
+      top.className = "colTop";
+      top.textContent = String(c);
+      col.appendChild(top);
+
+      const stack = document.createElement("div");
+      stack.className = "stack";
+      const h = HEIGHT[c];
+const offset = START_OFFSET[c];
+
+// yläpuolen tyhjät ruudut
+for (let i=0;i<offset;i++){
+  const spacer = document.createElement("div");
+  spacer.className = "cell spacer";
+  stack.appendChild(spacer);
+}
+
+// varsinaiset ruudut
+for (let i=1;i<=h;i++){
+  const cell = document.createElement("div");
+  cell.className = "cell" + (i===h ? " topCell":"");
+  cell.dataset.col = String(c);
+  cell.dataset.pos = String(i);
+
+  const markers = document.createElement("div");
+  markers.className = "markers";
+  cell.appendChild(markers);
+
+  stack.appendChild(cell);
+}
+
+      col.appendChild(stack);
+      elCols.appendChild(col);
+    }
+  }
+
+  function renderDice(){
+    elDice.innerHTML = "";
+    const dice = (G && G.lastDice && G.lastDice.length===4) ? G.lastDice : [0,0,0,0];
+    for (const d of dice){
+      const die = document.createElement("div");
+      die.className = "die";
+      die.textContent = d ? String(d) : "–";
+      elDice.appendChild(die);
+    }
+    elRollNum.textContent = G ? String(G.rollNo) : "0";
+  }
+
+  function renderPlayers(){
+    elPlayers.innerHTML = "";
+    if(!G) return;
+
+    for (let i=0;i<G.players.length;i++){
+      const p = G.players[i];
+      const wrap = document.createElement("div");
+      wrap.className = "pitem";
+      if (i === G.turn && G.phase !== "ENDED"){
+        wrap.style.outline = "3px solid rgba(255,255,255,.5)";
+        wrap.style.outlineOffset = "2px";
+      }
+      const left = document.createElement("div");
+      left.className = "pname";
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.background = p.color;
+      left.appendChild(dot);
+      const nm = document.createElement("div");
+      nm.className = "nm";
+      nm.textContent = p.name;
+      left.appendChild(nm);
+
+      const right = document.createElement("div");
+      right.className = "pscore";
+      right.innerHTML = `Voitetut: <strong style="color:var(--txt)">${p.won}</strong>/3`;
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      elPlayers.appendChild(wrap);
+    }
+  }
+
+  function renderBoardState(){
+    if(!G) return;
+
+    // column top lock indicator
+    for (const c of COLS){
+      const top = elCols.querySelector(`.col[data-col="${c}"] .colTop`);
+      const locked = G.wonBy[c] !== -1;
+      top.classList.toggle("locked", locked);
+      top.innerHTML = `${c}` + (locked ? `<span class="lock">🔒</span>` : "");
+    }
+
+    // Clear all markers
+    elCols.querySelectorAll(".cell .markers").forEach(m=> m.innerHTML = "");
+
+    const cur = G.turn;
+
+    // Permanent markers: show if any player's perm is at that pos.
+    for (const c of COLS){
+      if (G.wonBy[c] !== -1){
+        // show winner marker at top cell
+        const winId = G.wonBy[c];
+        const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${HEIGHT[c]}"] .markers`);
+        if (cell){
+          const mm = document.createElement("div");
+          mm.className = "m";
+          mm.style.background = G.players[winId].color;
+          mm.title = `Voitettu: ${G.players[winId].name}`;
+          cell.appendChild(mm);
+        }
+        continue;
+      }
+      for (let pid=0;pid<G.players.length;pid++){
+        const pos = G.perm[c][pid];
+        if (pos>0){
+          const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
+          if (cell){
+            const mm = document.createElement("div");
+            mm.className = "m";
+            mm.style.background = G.players[pid].color;
+            mm.title = `${G.players[pid].name} @${c}:${pos}`;
+            cell.appendChild(mm);
+          }
+        }
+      }
+    }
+
+    // Temporary runners (white) for current player: show at temp pos
+    for (const cStr of Object.keys(G.temp)){
+      const c = parseInt(cStr,10);
+      const pos = G.temp[c];
+      if (pos>0){
+        const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
+        if (cell){
+          const rr = document.createElement("div");
+          rr.className = "runner";
+          rr.title = `Runner @${c}:${pos}`;
+          cell.appendChild(rr);
+        }
+      }
+    }
+
+    // Runner count + active columns
+    elRunnerCount.textContent = String(G.active.length);
+    elActiveCols.textContent = G.active.length ? G.active.join(", ") : "–";
+
+    // turn label
+    elTurnName.textContent = (G.phase==="ENDED") ? "-" : G.players[G.turn].name;
+  }
+
+  function renderOptions(options){
+    elOptions.innerHTML = "";
+    if(!G) return;
+	
+	if (G.phase === "ENDED"){
+  elOptions.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "optBtn";
+  box.style.cursor = "default";
+  box.innerHTML = `
+    <div>
+      <div class="sum" style="font-size:18px;font-weight:900;">
+        🏆 ${G.players[G.winner].name} voitti!
+      </div>
+      <div class="meta">
+        Ensimmäisenä ${G.players[G.winner].won} pylvästä.
+      </div>
+    </div>
+  `;
+
+  elOptions.appendChild(box);
+  return;
+}
+
+if (G.phase === "BUST"){
+  const b = document.createElement("button");
+  b.className = "optBtn";
+  b.innerHTML = `
+    <div>
+      <div class="sum" style="color:var(--bad);font-weight:900;">
+        Ei mahdollisia siirtoja. Bust!
+      </div>
+      <div class="meta">
+        Vuoron edistys menetetään ja vuoro siirtyy seuraavalle.
+      </div>
+    </div>
+  `;
+  b.addEventListener("click", ()=>{
+    endTurnBust();
+  });
+  elOptions.appendChild(b);
+  return;
+}
+
+    if (G.phase !== "NEED_CHOICE"){
+      const d = document.createElement("div");
+      d.className = "hint";
+      d.textContent = (G.phase==="NEED_ROLL") ? "Heitä, jotta saat vaihtoehdot." : "Peli päättyi.";
+      elOptions.appendChild(d);
+      return;
+    }
+
+    if (!options.length){
+      const d = document.createElement("div");
+      d.className = "hint";
+      d.innerHTML = `<span style="color:var(--bad);font-weight:900;">Bust!</span> Et voi liikkua. Vuoro päättyy ja tämän vuoron edistys menetetään.`;
+      elOptions.appendChild(d);
+      return;
+    }
+
+    for (const opt of options){
+      const b = document.createElement("button");
+      b.className = "optBtn";
+      const left = document.createElement("div");
+      left.innerHTML = `<div><span class="sum">${opt.label}</span></div><div class="meta">${opt.meta}</div>`;
+      const right = document.createElement("div");
+      right.innerHTML = `<span class="meta">siirrot</span> <strong>${opt.movesText}</strong>`;
+      b.appendChild(left);
+      b.appendChild(right);
+      b.addEventListener("click", ()=>{
+        applyOption(opt);
+      });
+      elOptions.appendChild(b);
+    }
+  }
+
+  function renderButtons(){
+    if(!G){
+      btnRoll.disabled = true;
+      btnStop.disabled = true;
+      btnEndTurn.disabled = true;
+      return;
+    }
+    const ended = (G.phase==="ENDED");
+    btnRoll.disabled = ended || (G.phase!=="NEED_ROLL");
+// Lopeta (tallenna) sallitaan vain sen jälkeen kun joku optBtn on painettu
+// (eli kun palataan takaisin NEED_ROLL-tilaan) ja jos on aktiivisia pylväitä.
+btnStop.disabled = ended || (G.phase!=="NEED_ROLL") || (G.active.length===0);
+
+    btnEndTurn.disabled = ended;
+  }
+
+  function renderAll(options=[]){
+    renderDice();
+    renderPlayers();
+    renderBoardState();
+    renderOptions(options);
+    renderButtons();
+  }
+
+  function setStatus(msg){
+    elStatus.textContent = msg;
+  }
+
+  // --- Rules helpers ---
+  function isLocked(col){ return G.wonBy[col] !== -1; }
+
+  function getBasePos(col){
+    const cur = G.turn;
+    const permPos = G.perm[col][cur];
+    const tempPos = (G.temp[col] || 0);
+    return Math.max(permPos, tempPos);
+  }
+
+  function canUseCol(col){
+    if (isLocked(col)) return false;
+    const h = HEIGHT[col];
+    const base = getBasePos(col);
+    // if already at top (this turn or permanently), cannot move further
+    return base < h;
+  }
+
+  function ensureActive(col){
+    if (G.active.includes(col)) return true;
+    if (G.active.length >= 3) return false;
+    G.active.push(col);
+    // start runner just above permanent (or 1 if none)
+    const start = G.perm[col][G.turn] + 1;
+    G.temp[col] = Math.max(G.temp[col] || 0, start);
+    return true;
+  }
+
+  function advance(col, steps){
+    // assumes col usable and active ensured
+    const h = HEIGHT[col];
+    const base = getBasePos(col);
+    const next = Math.min(h, base + steps);
+    G.temp[col] = next;
+  }
+
+  // Pairings from 4 dice values
+  function pairings(d){
+    // d: [a,b,c,e]
+    const a=d[0], b=d[1], c=d[2], e=d[3];
+    const pairs = [
+      [[a,b],[c,e]],
+      [[a,c],[b,e]],
+      [[a,e],[b,c]]
+    ];
+    // map to sums
+    return pairs.map(p => {
+      const s1 = p[0][0]+p[0][1];
+      const s2 = p[1][0]+p[1][1];
+      return {s1, s2, raw:p};
+    });
+  }
+
+  function cloneTurnState(){
+    return {
+      active: G.active.slice(),
+      temp: Object.assign({}, G.temp),
+    };
+  }
+
+  function restoreTurnState(snap){
+    G.active = snap.active.slice();
+    G.temp = Object.assign({}, snap.temp);
+  }
+
+  // Build options for current dice:
+  function computeOptions(){
+    const d = G.lastDice;
+    const ps = pairings(d);
+
+    const seen = new Set();
+    const opts = [];
+
+    for (const p of ps){
+      // normalize to reduce duplicates (sums order doesn't matter for display)
+      const key = [Math.min(p.s1,p.s2), Math.max(p.s1,p.s2)].join("-");
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const snap = cloneTurnState();
+
+      const moves = []; // {col, steps}
+      let feasible1 = false, feasible2 = false;
+
+      // If sums equal -> attempt 2 steps in that column (requires it to be usable and can be active)
+      if (p.s1 === p.s2){
+        const col = p.s1;
+        if (!isLocked(col)){
+          // need to be able to use/start this column and have capacity (or already active)
+          const already = G.active.includes(col);
+          const capOk = already || (G.active.length < 3);
+          const can = capOk && canUseCol(col);
+          if (can){
+            if (!already) ensureActive(col);
+            advance(col, 2);
+            moves.push({col, steps:2});
+            feasible1 = true;
+          }
+        }
+      } else {
+        // two separate columns, each 1 step if possible
+        // We must apply BOTH moves if BOTH are feasible for this pairing.
+        // Feasibility depends on locked, top reached, and runner capacity for starting new columns.
+        const order = [p.s1, p.s2];
+
+        // Check feasibility independently with snapshot-like capacity logic
+        // We'll simulate in a controlled way:
+        const trySim = (col) => {
+          if (isLocked(col)) return false;
+          if (!canUseCol(col)) return false;
+          if (G.active.includes(col)) return true;
+          return G.active.length < 3;
+        };
+
+        const can1 = trySim(order[0]);
+        const can2 = trySim(order[1]);
+
+        // Apply moves:
+        if (can1){
+          if (!G.active.includes(order[0])) ensureActive(order[0]);
+          advance(order[0], 1);
+          feasible1 = true;
+          moves.push({col:order[0], steps:1});
+        }
+        if (can2){
+          if (!G.active.includes(order[1])) ensureActive(order[1]);
+          advance(order[1], 1);
+          feasible2 = true;
+          moves.push({col:order[1], steps:1});
+        }
+
+        // If both were feasible, good: both applied.
+        // If only one feasible, that's allowed (the other "doesn't count" in that situation).
+      }
+
+      // Option valid only if at least one move happened
+      const moved = (feasible1 || feasible2);
+      if (moved){
+        // Build option object from resulting delta vs snapshot
+        const after = cloneTurnState();
+        restoreTurnState(snap);
+
+        // Human label & meta
+        const sums = (p.s1===p.s2) ? `${p.s1}+${p.s2} → ${p.s1}` : `${p.s1} & ${p.s2}`;
+        const meta = (p.s1===p.s2)
+          ? `Sama summa kahdesti: 2 askelta pylväässä ${p.s1} (jos mahdollinen).`
+          : `Valittu paritus. Jos molemmat siirrot mahdollisia, molemmat tehdään.`;
+
+        const movesText = moves.map(m => `${m.col}:${m.steps}`).join(", ");
+
+        opts.push({
+          key,
+          label: sums,
+          meta,
+          movesText,
+          // store resulting state diff
+          result: after,
+          // for status text
+          moves
+        });
+      } else {
+        restoreTurnState(snap);
+      }
+    }
+
+    // Sort options: prefer ones with 2 moves over 1, then by "rarity" (shorter columns are harder -> higher value)
+    opts.sort((a,b)=>{
+      const am = a.moves.reduce((s,m)=>s+m.steps,0);
+      const bm = b.moves.reduce((s,m)=>s+m.steps,0);
+      if (bm!==am) return bm-am;
+      // prefer moves in higher-risk columns (2,12 hardest)
+      const score = (opt)=> opt.moves.reduce((s,m)=> s + (MAXH - HEIGHT[m.col])*10 + m.col*0.01, 0);
+      return score(b)-score(a);
+    });
+
+    return opts;
+  }
+
+  function applyOption(opt){
+    if (!G || G.phase!=="NEED_CHOICE") return;
+    G.active = opt.result.active.slice();
+    G.temp = Object.assign({}, opt.result.temp);
+
+    // After applying, check if any active column reached top (still not claimed until stop).
+    const tops = [];
+    for (const c of G.active){
+      if ((G.temp[c]||0) >= HEIGHT[c]) tops.push(c);
+    }
+    if (tops.length){
+      setStatus(`${G.players[G.turn].name} eteni huipulle pylväässä/pylväissä: ${tops.join(", ")}. Voit jatkaa tai lopettaa.`);
+    } else {
+      setStatus(`${G.players[G.turn].name} siirsi: ${opt.movesText}. Heitä uudestaan tai lopeta.`);
+    }
+
+    G.phase = "NEED_ROLL";
+    renderAll([]);
+  }
+
+  // --- Turn flow ---
+function rollDice(){
+  if (!G || G.phase!=="NEED_ROLL") return;
+  if (G.winner !== -1) return;
+
+  const d = [1,1,1,1].map(()=> 1 + Math.floor(Math.random()*6));
+  G.lastDice = d;
+  G.rollNo++;
+
+  // compute options
+  const opts = computeOptions();
+
+  if (!opts.length){
+    // Bust: EI automaattista vuoron vaihtoa — vaatii kuittauksen
+    setStatus(`${G.players[G.turn].name}: Ei mahdollisia siirtoja (Bust).`);
+    G.phase = "BUST";
+    renderAll([]);
+    return;
+  }
+
+  // normaali polku
+  G.phase = "NEED_CHOICE";
+  setStatus(`${G.players[G.turn].name}: valitse paritus.`);
+  renderAll(opts);
+}
+
+
+  function endTurnBust(){
+    // lose everything achieved during this turn (no commits)
+    // remove runners -> clear temp
+    const next = (G.turn + 1) % G.players.length;
+    G.turn = next;
+    resetTurnTemp();
+    setStatus(`${G.players[G.turn].name}: heitä nopat.`);
+  }
+
+  function stopAndCommit(){
+    if (!G || G.winner!==-1) return;
+    if (G.active.length===0) return;
+
+    const cur = G.turn;
+    const claimedNow = [];
+
+    // commit temp positions to perm for current player (only one cone per column)
+    for (const c of G.active){
+      if (isLocked(c)) continue;
+      const tp = G.temp[c] || 0;
+      if (tp > G.perm[c][cur]) G.perm[c][cur] = tp;
+    }
+
+    // check for column wins (reached top and stop voluntarily)
+    for (const c of G.active){
+      if (isLocked(c)) continue;
+      if (G.perm[c][cur] >= HEIGHT[c]){
+        // claim column: lock and reset all other players' markers in that column
+        G.wonBy[c] = cur;
+        for (let pid=0;pid<G.players.length;pid++){
+          if (pid !== cur) G.perm[c][pid] = 0;
+        }
+        // winner marker stays at top via wonBy
+        claimedNow.push(c);
+      }
+    }
+
+    if (claimedNow.length){
+      G.players[cur].won += claimedNow.length;
+    }
+
+    // check game end
+if (G.players[cur].won >= 3){
+  G.winner = cur;
+  G.phase = "ENDED";
+
+  // 🔴 POISTA kaikki vuoron aikaiset runnerit
+  G.temp = {};
+  G.active = [];
+
+  setStatus(`🏁 ${G.players[cur].name} voitti pelin!`);
+  renderAll([]);
+  return;
+}
+
+
+    // pass turn
+    const next = (G.turn + 1) % G.players.length;
+    G.turn = next;
+    resetTurnTemp();
+
+    if (claimedNow.length){
+      setStatus(`${G.players[cur].name} voitti pylvään/pylväitä: ${claimedNow.join(", ")}. ${G.players[G.turn].name}: heitä nopat.`);
+    } else {
+      setStatus(`${G.players[G.turn].name}: heitä nopat.`);
+    }
+  }
+
+  function forceEndTurn(){
+    if (!G || G.winner!==-1) return;
+    // This is just a safety: treat as "stop without commit" if no runners? Actually rules don't allow,
+    // but user asked for a button if stuck. We'll interpret:
+    // If you have runners (active), you probably intended Stop; else pass.
+    if (G.active.length){
+      stopAndCommit();
+    } else {
+      const next = (G.turn + 1) % G.players.length;
+      G.turn = next;
+      resetTurnTemp();
+      setStatus(`${G.players[G.turn].name}: heitä nopat.`);
+    }
+  }
+
+  // --- Setup UI ---
+  function showSetup(show){
+    setupOverlay.classList.toggle("show", !!show);
+    setupOverlay.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+  function showHow(show){
+    howOverlay.classList.toggle("show", !!show);
+    howOverlay.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
+  function rebuildPlayerFields(){
+    const n = parseInt(playerCountSel.value,10);
+    playerFields.innerHTML = "";
+    startPlayerSel.innerHTML = "";
+    for (let i=0;i<n;i++){
+      const f1 = document.createElement("div");
+      f1.className = "field";
+      f1.innerHTML = `<label>Pelaaja ${i+1} nimi</label><input id="pn_${i}" value="${["Päivi","Jouko","Martti","Elina"][i] || ("P"+(i+1))}">`;
+      const f2 = document.createElement("div");
+      f2.className = "field";
+      const opts = PLAYER_COLORS.map((c,idx)=> `<option value="${idx}">${c.name}</option>`).join("");
+      f2.innerHTML = `<label>Väri</label><select id="pc_${i}">${opts}</select>`;
+      playerFields.appendChild(f1);
+      playerFields.appendChild(f2);
+
+      const op = document.createElement("option");
+      op.value = String(i);
+      op.textContent = `Pelaaja ${i+1}`;
+      startPlayerSel.appendChild(op);
+    }
+    // default unique colors
+    for (let i=0;i<n;i++){
+      const sel = document.getElementById(`pc_${i}`);
+      sel.value = String(i);
+    }
+    startPlayerSel.value = "0";
+  }
+
+  function gatherPlayers(){
+    const n = parseInt(playerCountSel.value,10);
+    const used = new Set();
+    const players = [];
+    for (let i=0;i<n;i++){
+      const name = (document.getElementById(`pn_${i}`).value || `Pelaaja ${i+1}`).trim();
+      let cidx = parseInt(document.getElementById(`pc_${i}`).value,10);
+      // if duplicates, still allow (rules don't forbid), but we try to keep unique if possible:
+      if (used.has(cidx)){
+        // pick first free
+        const free = PLAYER_COLORS.findIndex((_,k)=> !used.has(k));
+        if (free !== -1) cidx = free;
+      }
+      used.add(cidx);
+      players.push({ name, color: PLAYER_COLORS[cidx].hex });
+    }
+    return players;
+  }
+
+  // --- Responsive sizing (no scroll) ---
+  function resizeBoard(){
+    const app = document.querySelector(".app");
+    if (!app) return;
+
+    const main = document.querySelector(".main");
+    const topbar = document.querySelector(".topbar");
+    const boardWrap = document.querySelector(".boardWrap");
+    if (!main || !topbar || !boardWrap) return;
+
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
+    // Estimate available board area
+    // We compute a cell size so that 13 cells (max height) + header(28) fits in boardWrap height.
+    const wrapRect = boardWrap.getBoundingClientRect();
+    const colsRect = document.querySelector(".cols").getBoundingClientRect();
+    const padY = 10*2; // cols padding top+bottom
+    const gapsY = 4*12; // approx stack gap (12 gaps max) * 4px
+    const headerH = 28 + 6; // colTop + gap
+    const availableH = wrapRect.height - 52 - 10 - 10; // boardHeader + paddings approx
+    const maxCellByH = Math.floor((availableH - headerH - padY - gapsY) / MAXH);
+
+    // width: 11 columns + gaps
+    const availableW = colsRect.width - 10*2;
+    const maxCellByW = Math.floor((availableW - (10*6)) / 11); // rough
+
+    const cell = Math.max(18, Math.min(34, Math.min(maxCellByH, maxCellByW)));
+    document.documentElement.style.setProperty("--cell", cell + "px");
+  }
+
+  // --- Events ---
+  btnRoll.addEventListener("click", rollDice);
+  btnStop.addEventListener("click", stopAndCommit);
+  btnEndTurn.addEventListener("click", forceEndTurn);
+
+  btnNew.addEventListener("click", ()=>{
+    rebuildPlayerFields();
+    showSetup(true);
+  });
+  btnHow.addEventListener("click", ()=> showHow(true));
+  btnCloseSetup.addEventListener("click", ()=> showSetup(false));
+  btnCloseHow.addEventListener("click", ()=> showHow(false));
+  setupOverlay.addEventListener("click", (e)=>{ if(e.target===setupOverlay) showSetup(false); });
+  howOverlay.addEventListener("click", (e)=>{ if(e.target===howOverlay) showHow(false); });
+
+  playerCountSel.addEventListener("change", rebuildPlayerFields);
+
+  btnStartGame.addEventListener("click", ()=>{
+    const players = gatherPlayers();
+    const startIndex = parseInt(startPlayerSel.value,10) || 0;
+    showSetup(false);
+    startGame(players, startIndex);
+  });
+
+  window.addEventListener("resize", ()=>{ resizeBoard(); });
+
+  // --- init ---
+  buildBoard();
+  rebuildPlayerFields();
+  renderAll([]);
+  resizeBoard();
+})();
+</script>
+</body>
+</html>
