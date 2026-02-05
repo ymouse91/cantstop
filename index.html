@@ -164,11 +164,20 @@
     .colTop.locked{
       background: rgba(255,255,255,.04);
       opacity:.6;
+
     }
     .colTop .lock{
-      position:absolute; right:6px; top:4px;
-      font-size: 12px; opacity:.75;
+      position:absolute; right:8px; top:4px;
+      font-size: 16px; opacity:1;
     }
+.cell.topCell .lock{
+  position:absolute;
+  right:6px;
+  top:6px;
+  font-size: 16px;
+  opacity:.9;
+  pointer-events:none;
+}
 
     .stack{
       flex:1;
@@ -519,7 +528,7 @@ html,body{
           </div>
           <div class="players" id="players"></div>
 		  <button class="btn primary" id="btnRoll">Heitä</button>
-          <button class="btn warn" id="btnStop">Lopeta (tallenna)</button>
+          <button class="btn warn" id="btnStop">Lopeta ja tallenna</button>
         </div>
         <div class="card" style="display:flex; flex-direction:column; gap:8px; min-height:0;">
           <div class="row" style="justify-content:space-between;">
@@ -711,7 +720,7 @@ const START_OFFSET = {
       const stack = document.createElement("div");
       stack.className = "stack";
       const h = HEIGHT[c];
-const offset = START_OFFSET[c];
+      const offset = START_OFFSET[c];
 
 // yläpuolen tyhjät ruudut
 for (let i=0;i<offset;i++){
@@ -784,74 +793,83 @@ for (let i=1;i<=h;i++){
     }
   }
 
-  function renderBoardState(){
-    if(!G) return;
+function renderBoardState(){
+  if(!G) return;
 
-    // column top lock indicator
-    for (const c of COLS){
-      const top = elCols.querySelector(`.col[data-col="${c}"] .colTop`);
-      const locked = G.wonBy[c] !== -1;
-      top.classList.toggle("locked", locked);
-      top.innerHTML = `${c}` + (locked ? `<span class="lock">🔒</span>` : "");
+  // column top lock indicator
+  for (const c of COLS){
+    const top = elCols.querySelector(`.col[data-col="${c}"] .colTop`);
+    const locked = G.wonBy[c] !== -1;
+    top.classList.toggle("locked", locked);
+    top.innerHTML = `${c}` + (locked ? `<span class="lock">🔒</span>` : "");
+  }
+
+  // Clear all markers
+  elCols.querySelectorAll(".cell .markers").forEach(m=> m.innerHTML = "");
+
+  const cur = G.turn;
+
+  // Permanent markers: show if any player's perm is at that pos.
+  for (const c of COLS){
+    if (G.wonBy[c] !== -1){
+      // show winner marker + lock at top cell
+      const winId = G.wonBy[c];
+      const markers = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${HEIGHT[c]}"] .markers`);
+      if (markers){
+        const mm = document.createElement("div");
+        mm.className = "m";
+        mm.style.background = G.players[winId].color;
+        mm.title = `Voitettu: ${G.players[winId].name}`;
+        markers.appendChild(mm);
+
+        // 🔒 also show lock inside the top cell (beside the marker)
+        const lk = document.createElement("span");
+        lk.className = "lockInCell";
+        lk.textContent = "🔒";
+        lk.title = "Sarake lukittu";
+        markers.appendChild(lk);
+      }
+      continue;
     }
 
-    // Clear all markers
-    elCols.querySelectorAll(".cell .markers").forEach(m=> m.innerHTML = "");
-
-    const cur = G.turn;
-
-    // Permanent markers: show if any player's perm is at that pos.
-    for (const c of COLS){
-      if (G.wonBy[c] !== -1){
-        // show winner marker at top cell
-        const winId = G.wonBy[c];
-        const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${HEIGHT[c]}"] .markers`);
-        if (cell){
+    for (let pid=0;pid<G.players.length;pid++){
+      const pos = G.perm[c][pid];
+      if (pos>0){
+        const markers = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
+        if (markers){
           const mm = document.createElement("div");
           mm.className = "m";
-          mm.style.background = G.players[winId].color;
-          mm.title = `Voitettu: ${G.players[winId].name}`;
-          cell.appendChild(mm);
-        }
-        continue;
-      }
-      for (let pid=0;pid<G.players.length;pid++){
-        const pos = G.perm[c][pid];
-        if (pos>0){
-          const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
-          if (cell){
-            const mm = document.createElement("div");
-            mm.className = "m";
-            mm.style.background = G.players[pid].color;
-            mm.title = `${G.players[pid].name} @${c}:${pos}`;
-            cell.appendChild(mm);
-          }
+          mm.style.background = G.players[pid].color;
+          mm.title = `${G.players[pid].name} @${c}:${pos}`;
+          markers.appendChild(mm);
         }
       }
     }
-
-    // Temporary runners (white) for current player: show at temp pos
-    for (const cStr of Object.keys(G.temp)){
-      const c = parseInt(cStr,10);
-      const pos = G.temp[c];
-      if (pos>0){
-        const cell = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
-        if (cell){
-          const rr = document.createElement("div");
-          rr.className = "runner";
-          rr.title = `Runner @${c}:${pos}`;
-          cell.appendChild(rr);
-        }
-      }
-    }
-
-    // Runner count + active columns
-    elRunnerCount.textContent = String(G.active.length);
-    elActiveCols.textContent = G.active.length ? G.active.join(", ") : "–";
-
-    // turn label
-    elTurnName.textContent = (G.phase==="ENDED") ? "-" : G.players[G.turn].name;
   }
+
+  // Temporary runners (white) for current player: show at temp pos
+  for (const cStr of Object.keys(G.temp)){
+    const c = parseInt(cStr,10);
+    const pos = G.temp[c];
+    if (pos>0){
+      const markers = elCols.querySelector(`.cell[data-col="${c}"][data-pos="${pos}"] .markers`);
+      if (markers){
+        const rr = document.createElement("div");
+        rr.className = "runner";
+        rr.title = `Runner @${c}:${pos}`;
+        markers.appendChild(rr);
+      }
+    }
+  }
+
+  // Runner count + active columns
+  elRunnerCount.textContent = String(G.active.length);
+  elActiveCols.textContent = G.active.length ? G.active.join(", ") : "–";
+
+  // turn label
+  elTurnName.textContent = (G.phase==="ENDED") ? "-" : G.players[G.turn].name;
+}
+
 
   function renderOptions(options){
     elOptions.innerHTML = "";
