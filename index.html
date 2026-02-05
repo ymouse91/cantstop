@@ -480,6 +480,19 @@ html,body{
   -webkit-text-fill-color:#b7d8ff;
 }
 
+/* 🔴 BUST voittaa aina */
+.optBtn.bust .sum{
+  color: var(--bad);
+  -webkit-text-fill-color: var(--bad);
+  font-weight: 900;
+}
+
+.optBtn.bust{
+  border-color: rgba(255,92,119,.6);
+  background: rgba(255,92,119,.14);
+}
+
+
   </style>
 </head>
 <body>
@@ -487,7 +500,7 @@ html,body{
   <div class="topbar">
     <div class="brand">
       <div class="t">Can't Stop</div>
-      <div class="s">PC / iPad PWA </div>
+      <div class="s">Original idea by Sid Sacksaon </div>
     </div>
     <div class="pill" id="turnPill">
       Vuoro: <strong id="turnName">-</strong>
@@ -910,10 +923,11 @@ function renderBoardState(){
 
 if (G.phase === "BUST"){
   const b = document.createElement("button");
-  b.className = "optBtn";
+b.className = "optBtn bust";
+
   b.innerHTML = `
     <div>
-      <div class="sum" style="color:var(--bad);font-weight:900;">
+      <div class="sum">
         Ei mahdollisia siirtoja. Bust!
       </div>
       <div class="meta">
