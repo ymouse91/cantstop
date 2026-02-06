@@ -83,7 +83,7 @@
     }
     .btn:active{ transform: translateY(1px); }
     .btn[disabled]{ opacity:.45; cursor:not-allowed; }
-    .btn.primary{ border-color: rgba(61,220,151,.55); background: rgba(61,220,151,.14); margin-top: 16px;}
+    .btn.primary{ border-color: rgba(61,220,151,.55); background: rgba(61,220,151,.14); }
     .btn.danger{ border-color: rgba(255,92,119,.55); background: rgba(255,92,119,.14); }
     .btn.warn{ border-color: rgba(255,209,102,.55); background: rgba(255,209,102,.14); }
     .btn.small{ padding:7px 10px; border-radius:10px; font-size: 13px; }
@@ -492,6 +492,23 @@ html,body{
   background: rgba(255,92,119,.14);
 }
 
+.btnRow{
+  display:flex;
+  align-items:center;
+  gap:8px;        /* halutessasi */
+}
+
+#btnRoll{
+  margin-left:auto;
+}
+
+/* POISTA tämä btn.primary:stä */
+/* margin-top: 16px; */
+
+/* LISÄÄ tämä sinne missä oikeasti haluat välin */
+.card .btnRow{
+  margin-top: 6px;
+}
 
   </style>
 </head>
@@ -552,8 +569,11 @@ html,body{
             <div class="pill">Voitetut pylväät: <strong id="needWin">3</strong></div>
           </div>
           <div class="players" id="players"></div>
-		  <button class="btn primary" id="btnRoll">Heitä</button>
+		  <div class="btnRow">
+
           <button class="btn warn" id="btnStop">Lopeta ja tallenna</button>
+		  		  <button class="btn primary" id="btnRoll">Heitä</button>
+		  </div>
         </div>
         <div class="card" style="display:flex; flex-direction:column; gap:8px; min-height:0;">
           <div class="row" style="justify-content:space-between;">

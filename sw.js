@@ -1,4 +1,4 @@
-const CACHE = "cantstop-pwa-v1";
+const CACHE = "cantstop-pwa-v2";
 const ASSETS = [
   "./",
   "./index.html",
