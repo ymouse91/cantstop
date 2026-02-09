@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+
+  <!-- iOS: viewport-fit=cover on pakko safe-areaa varten -->
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+
+  <!-- PWA perus -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b1533"> <!-- Android/Chrome -->
+  <meta name="color-scheme" content="dark light">
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Peli">
+
+  <!-- Icons -->
+  <link rel="icon" href="icon192.png">
+  <link rel="apple-touch-icon" href="icon192.png">
+
+  <style>
+    :root{
+      --bg: #0b1533;
+      --ink: #eaf0ff;
+
+      /* JS asettaa --vh */
+      --vh: 1vh;
+
+      /* safe area */
+      --sat: env(safe-area-inset-top);
+      --sar: env(safe-area-inset-right);
+      --sab: env(safe-area-inset-bottom);
+      --sal: env(safe-area-inset-left);
+    }
+
+    /* TÄRKEÄ: html-tausta estää valkoiset “nauhat” kuminauhassa */
+    html{
+      height: 100%;
+      background: var(--bg);
+      background-color: var(--bg);
+    }
+
+    body{
+      margin:0;
+      height: 100%;
+      min-height: calc(var(--vh) * 100);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:linear-gradient(135deg,#0f172a 0%,#1a2a4a 50%,#0f172a 100%);
+      /* estä “sivun” scrollaus */
+      overflow: hidden;
+      overscroll-behavior: none;
+
+      /* iOS: nopeampi tuntuma */
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* App-container hoitaa safe-areat (ei body!) */
+    #app{
+      position: fixed;
+      inset: 0;
+      padding: max(12px, var(--sat)) max(12px, var(--sar)) max(12px, var(--sab)) max(12px, var(--sal));
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      background: radial-gradient(1200px 800px at 30% 10%, #162a67 0%, var(--bg) 55%, #070c1d 100%);
+    }
+
+    header{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    main{
+      min-height: 0; /* grid-overflow fix */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    footer{ text-align:center; opacity:.9; }
+
+    /* iPhone portrait: tilaa pienemmäksi, fontteja alas */
+    @media (max-width: 430px) and (orientation: portrait) and (hover:none) and (pointer:coarse){
+      #app{ gap: 8px; padding: max(10px, var(--sat)) 10px max(10px, var(--sab)); }
+      header h1{ font-size: 18px; margin:0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <h1 style="margin:0;font-size:22px;">Peli</h1>
+      <div style="display:flex;gap:8px;">
+        <button id="btnReset">Reset</button>
+        <button id="btnHelp">Ohjeet</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- peli renderöi tänne -->
+      <div id="game"></div>
+    </main>
+
+    <footer id="status"></footer>
+  </div>
+
+  <script>
+    // iOS viewport-korkeus oikein (estää valkoisia nauhoja ja “kuminauhaa”)
+    function setVH(){
+      document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
+    }
+    setVH();
+    window.addEventListener("resize", setVH);
+
+    // iOS: estä “double tap zoom” (usein peleissä toivottu)
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd < 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive:false });
+  </script>
+
+  <script>
+    // SW rekisteröinti (PWA/offline)
+    if ("serviceWorker" in navigator){
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(()=>{});
+    }
+  </script>
+</body>
+</html>
